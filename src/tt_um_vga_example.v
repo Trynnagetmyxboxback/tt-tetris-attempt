@@ -118,8 +118,21 @@ module tt_um_trynnagetmyxboxback_tetris_attempt (
     wire [9:0] field_dy    = above_field ? 10'd0 : (box_y - FIELD_Y0);
     wire [9:0] frow_w      = field_dy / 10'd10;
 
-    wire [3:0] fcol = fcol_w[3:0];      // 0..9
-    wire [4:0] frow = frow_w[4:0];      // 0..19
+    // The cell index is registered.  box_x and box_y change at most once per
+    // frame, so these settle long before the next frame_tick and the picture is
+    // unchanged, but the /10 divide and the 200:1 grid read it feeds now occupy
+    // separate clock periods instead of sitting in series on one path.
+    reg [3:0] fcol;                     // 0..9
+    reg [4:0] frow;                     // 0..19
+    always @(posedge clk) begin
+        if (~rst_n) begin
+            fcol <= 4'd0;
+            frow <= 5'd0;
+        end else begin
+            fcol <= fcol_w[3:0];
+            frow <= frow_w[4:0];
+        end
+    end
 
     wire [4:0] next_row  = (frow == 5'd19) ? frow : (frow + 5'd1);
     wire [3:0] left_col  = (fcol == 4'd0)  ? fcol : (fcol - 4'd1);
